@@ -2,16 +2,19 @@ class ProtectCalls:
     def __init__(self, to_what, rules):
         def generalize_rules(rules):
             def process_exception(e):
-                for eType in type(e).__mro__:
+                for eType in type(e).__mro__[:-1]:
                     try:
                         return rules[eType](e)
-                    except:
+                    except KeyError:
                         pass
                 raise e
             return process_exception
 
         self.to_what = to_what
         self.exps = tuple(rules.keys())
+        assert all(issubclass(eType, BaseException) for eType in rules.keys()), \
+            f'Every key in rules must subclass {BaseException}'
+
         self.handle = generalize_rules(rules)
 
     def __getattribute__(self, name):
@@ -36,9 +39,9 @@ class ruler:
     def __call__(self, *exceptions):
         assert all(isinstance(e, type) for e in exceptions)
         if len(exceptions) == 1 and not issubclass(exceptions[0], BaseException):
-            result = self.rules.copy()
+            _ = self.rules.copy()
             self.rules.clear()
-            return result
+            return _
         else:
             return lambda h: tuple(self.rules.__setitem__(e, h) for e in exceptions)
 

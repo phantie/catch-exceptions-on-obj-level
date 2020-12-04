@@ -123,3 +123,11 @@ def test_front_page_example():
     assert protected.bar() == 'Caught AttributeError!'
     assert protected.baz() == 'ValueError!'
     assert protected.itch() == 'Unexpected TypeError!'
+
+def test_try_except_object_in_rules(basic_inst):
+    rules = {object: lambda e: str(e)}
+    with pytest.raises(AssertionError) as err:
+        protected = ProtectCalls(basic_inst, rules)
+
+    assert str(err.value) == "Every key in rules must subclass <class 'BaseException'>"
+
