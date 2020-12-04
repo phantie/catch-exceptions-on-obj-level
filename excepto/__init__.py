@@ -1,9 +1,14 @@
-__all__ = ['ProtectCalls', 'ruler']
-
 class ProtectCalls:
     def __init__(self, to_what, rules):
         def generalize_rules(rules):
-            return lambda e: rules[type(e)](e)
+            def process_exception(e):
+                for eType in type(e).__mro__:
+                    try:
+                        return rules[eType](e)
+                    except:
+                        pass
+                raise e
+            return process_exception
 
         self.to_what = to_what
         self.exps = tuple(rules.keys())
@@ -25,18 +30,16 @@ class ProtectCalls:
         else:
             return attr
 
-def init(cls): 
-    return cls()
-
-@init
 class ruler:
     rules = {}
 
-    def __call__(self, o):
-        assert isinstance(o, type)
-        if issubclass(o, Exception):
-            return lambda h: self.rules.__setitem__(o, h) 
-        else:
+    def __call__(self, *exceptions):
+        assert all(isinstance(e, type) for e in exceptions)
+        if len(exceptions) == 1 and not issubclass(exceptions[0], BaseException):
             result = self.rules.copy()
             self.rules.clear()
             return result
+        else:
+            return lambda h: tuple(self.rules.__setitem__(e, h) for e in exceptions)
+
+ruler = ruler()

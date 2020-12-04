@@ -9,6 +9,7 @@ def basic_inst():
         def foo(self): return 1/0
         def bar(self): return 1/0
         def baz(self): return self.k
+        def cast(self): return int('impossible')
 
     a = A()
     return a
@@ -70,3 +71,55 @@ def test_does_not_catch_AttibuteError_if_not_inside_a_function(basic_inst):
     assert proxied_inst.baz() == 'No attribute! Whatever, at least no exceptions.'
     with pytest.raises(AttributeError):
         proxied_inst.k
+
+def test_handling_of_multiple_exceptions(basic_inst):
+    @ruler
+    class rules:
+        @ruler(AttributeError, ZeroDivisionError)
+        def handle(e):
+            return f'Caught {e.__class__.__name__}!'
+
+        @ruler(ValueError)
+        def handle(e):
+            return 'Value error!'
+
+    proxied_inst = ProtectCalls(basic_inst, rules)
+    assert proxied_inst.foo() == 'Caught ZeroDivisionError!'
+    assert proxied_inst.bar() == 'Caught ZeroDivisionError!'
+    assert proxied_inst.baz() == 'Caught AttributeError!'
+    assert proxied_inst.cast() == 'Value error!'
+
+def test_front_page_example():
+    class A:
+        def foo(self):
+            return 1/0
+
+        def bar(self):
+            return self.FourOFour
+
+        def baz(self):
+            return int('eger')
+
+        def itch(self):
+            return (lambda: 0)(1, 2, 3)
+
+    @ruler
+    class rules:
+        @ruler(ZeroDivisionError, AttributeError)
+        def handle(e):
+            return f'Caught {e.__class__.__name__}!'
+
+        @ruler(ValueError)
+        def handle(e):
+            return 'ValueError!'
+
+        @ruler(Exception) # handle any other
+        def handle(e):
+            return f'Unexpected {e.__class__.__name__}!'
+
+    protected = ProtectCalls(A(), rules)
+
+    assert protected.foo() == 'Caught ZeroDivisionError!'
+    assert protected.bar() == 'Caught AttributeError!'
+    assert protected.baz() == 'ValueError!'
+    assert protected.itch() == 'Unexpected TypeError!'
