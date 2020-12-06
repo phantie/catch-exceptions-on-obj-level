@@ -31,10 +31,14 @@ Nothing's better than a good example:
         def handle(e):
             return f'Unexpected {e.__class__.__name__}!'
 
-    protected = ProtectCalls(A(), rules)
+    a = A()
+    protected = ProtectCalls(a, rules) # Does not modify the underlying object
+                                       # It's just a proxy.
 
     assert protected.foo() == 'Caught ZeroDivisionError!'
     assert protected.bar() == 'Caught AttributeError!'
     assert protected.baz() == 'ValueError!'
     assert protected.itch() == 'Unexpected TypeError!'
+    
+    a.baz() # raises ValueError
 ```
