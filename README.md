@@ -1,21 +1,14 @@
-# catch-exceptions-on-obj-level
+# supreme-error-handler
 
 Nothing's better than a good example:
 
 
 ```python
     class A:
-        def foo(self):
-            return 1/0
-
-        def bar(self):
-            return self.FourOFour
-
-        def baz(self):
-            return int('eger')
-
-        def itch(self):
-            return (lambda: 0)(1, 2, 3)
+        def foo(self): 1/0
+        def bar(self): self.FourOFour
+        def baz(self): int('eger')
+        def itch(self): (lambda: 0)(42)
 
     @ruler
     class rules:
@@ -42,3 +35,11 @@ Nothing's better than a good example:
     
     a.baz() # raises ValueError
 ```
+
+Install
+
+    pip install git+https://github.com/phantie/supreme-error-handler.git
+    
+Import
+
+    from excepto import ProtectCalls, ruler
